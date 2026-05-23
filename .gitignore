@@ -1,0 +1,10 @@
+data/raw/
+data/processed/
+__pycache__/*
+*.pyc
+notebooks/.ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*.ipynb
+models/*.pk1
+.venv/*
+.idea
+.idea/*
