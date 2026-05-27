@@ -24,6 +24,9 @@ def build_heatmap(freeze_frame, shooter_location, grid_size=(68, 52), blur=True)
         gy = int(np.clip(y / 80 * h, 0, h - 1))
         return gy, gx
 
+    if freeze_frame is None:
+        return heatmap
+
     for player in freeze_frame:
         gy, gx = to_grid(*player['location'])
         channel = 0 if player['teammate'] else 1
@@ -48,11 +51,15 @@ def extract_features(shot) -> dict:
         'angle':     calc_angle(x, y),
         'body_part': shot['shot_body_part'],
         'shot_type': shot['shot_type'],
+        'statsbomb_xg': shot['shot_statsbomb_xg'],
         'heatmap':   build_heatmap(shot['shot_freeze_frame'], shot['location']),
         'is_goal':   get_label(shot)
     }
 
 def build_feature_df(shots_df: pd.DataFrame) -> pd.DataFrame:
-    dataframe = pd.DataFrame(shots_df.apply(extract_features, axis=1).tolist())
-    dataframe['match_id'] = shots_df['match_id'].values
+    clean = shots_df[shots_df['shot_freeze_frame'].notna()].copy()
+    print(f"Dropped {len(shots_df) - len(clean)} shots without freeze frame")
+
+    dataframe = pd.DataFrame(clean.apply(extract_features, axis=1).tolist())
+    dataframe['match_id'] = clean['match_id'].values
     return dataframe

@@ -1,12 +1,17 @@
 import os
+import warnings
 import pandas as pd
 import numpy as np
 from statsbombpy import sb
 from features import build_feature_df
 
+# Suppress StatsBomb NoAuthWarning for free open data access
+warnings.filterwarnings('ignore', message='credentials were not supplied')
+
 # Constants
 RAW_CACHE = "data/processed/shots_raw.parquet"
 FEAT_CACHE = "data/processed/shots_features.parquet"
+HEATMAP_CACHE = "data/processed/heatmaps.npy"
 
 EURO_2024 = 55
 SEASON_2024 = 282
@@ -31,24 +36,34 @@ def load_raw_shots(competition_id=EURO_2024, season_id=SEASON_2024) -> pd.DataFr
 
 # build features
 def load_features() -> pd.DataFrame:
-    if os.path.exists(FEAT_CACHE):
+    if os.path.exists(FEAT_CACHE) and os.path.exists(HEATMAP_CACHE):
         print("Loading existing features from cache...")
-        return pd.read_parquet(FEAT_CACHE)
+        features_df = pd.read_parquet(FEAT_CACHE)
+        heatmaps = np.load(HEATMAP_CACHE)           # shape (n, 3, 68, 52)
+        features_df['heatmap'] = list(heatmaps)     # reattach as column
+        return features_df
 
     shots_df = load_raw_shots()
     print("Building features...")
     features_df = build_feature_df(shots_df)
-    features_df.to_parquet(FEAT_CACHE)
+
+    # save heatmaps as npy
+    heatmaps = np.stack(features_df['heatmap'].values)  # (n, 3, 68, 52)
+    np.save(HEATMAP_CACHE, heatmaps)
+
+    # extract parquet for features without heatmap
+    features_df.drop(columns=['heatmap']).to_parquet(FEAT_CACHE)
+
     return features_df
 
 # Split dataset -> Train | Validate | Test
-def split_data(features_df: pd.DataFrame, shots_raw: pd.DataFrame):
+def split_data(features_df: pd.DataFrame):
     """
     Split dataset in Train, Validate and Test set.
     This function splits the dataset by match, not only by index.
     I.e.: complete matches are allocated to one split
     """
-    match_ids = shots_raw['match_id'].unique()
+    match_ids = features_df['match_id'].unique()
     np.random.seed(42)
     np.random.shuffle(match_ids)
 
@@ -57,11 +72,9 @@ def split_data(features_df: pd.DataFrame, shots_raw: pd.DataFrame):
     val_ids = match_ids[int(n * 0.7):int(n * 0.85)]
     test_ids = match_ids[int(n * 0.85):]
 
-    train = features_df[shots_raw['match_id'].isin(train_ids)]
-    val = features_df[shots_raw['match_id'].isin(val_ids)]
-    test = features_df[shots_raw['match_id'].isin(test_ids)]
+    train = features_df[features_df['match_id'].isin(train_ids)]
+    val = features_df[features_df['match_id'].isin(val_ids)]
+    test = features_df[features_df['match_id'].isin(test_ids)]
 
+    print(f"Train: {len(train)} | Val: {len(val)} | Test: {len(test)}")
     return train, val, test
-
-
-
