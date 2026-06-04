@@ -63,7 +63,7 @@ def train_xgboost(train: pd.DataFrame) -> Pipeline:
         ('clf', XGBClassifier(
             n_estimators=100,
             max_depth=4,
-            learning_rate=0.1,
+            learning_rate=0.01,
             eval_metric='logloss',
             random_state=42
         ))
