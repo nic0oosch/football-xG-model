@@ -1,6 +1,7 @@
 statsbombpy
 numpy
 scikit-learn
+xgboost
 matplotlib
 seaborn
 pandas
