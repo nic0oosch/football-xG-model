@@ -23,14 +23,14 @@ COMPETITIONS = {
 
 
 # load raw data
-def load_raw_shots() -> pd.DataFrame:
+def load_raw_shots(competitions: set[tuple[int, int]] = COMPETITIONS) -> pd.DataFrame:
     if os.path.exists(RAW_CACHE):
         print("Loading existing data from cache...")
         return pd.read_parquet(RAW_CACHE)
 
     print("Loading statsbomb API...")
     all_shots = []
-    for competition_id, season_id in COMPETITIONS:
+    for competition_id, season_id in competitions:
         matches = sb.matches(competition_id=competition_id, season_id=season_id)
         for match in matches.match_id:
             events = sb.events(match_id=match)
