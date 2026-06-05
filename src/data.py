@@ -13,21 +13,28 @@ RAW_CACHE = "data/processed/shots_raw.parquet"
 FEAT_CACHE = "data/processed/shots_features.parquet"
 HEATMAP_CACHE = "data/processed/heatmaps.npy"
 
-EURO_2024 = 55
-SEASON_2024 = 282
+COMPETITIONS = {
+    (55, 282),  # EURO 2024
+    (9, 281),   # 1. Bundesliga 2023/2024
+    (16, 1),    # Champions League 2017/2018
+    (16, 4),    # Champions League 2018/2019
+    (43, 3),    # FIFA World Cup 2018
+}
+
 
 # load raw data
-def load_raw_shots(competition_id=EURO_2024, season_id=SEASON_2024) -> pd.DataFrame:
+def load_raw_shots() -> pd.DataFrame:
     if os.path.exists(RAW_CACHE):
         print("Loading existing data from cache...")
         return pd.read_parquet(RAW_CACHE)
 
     print("Loading statsbomb API...")
-    matches = sb.matches(competition_id=competition_id, season_id=season_id)
     all_shots = []
-    for match in matches.match_id:
-        events = sb.events(match_id=match)
-        all_shots.append(events[events['type'] == 'Shot'])
+    for competition_id, season_id in COMPETITIONS:
+        matches = sb.matches(competition_id=competition_id, season_id=season_id)
+        for match in matches.match_id:
+            events = sb.events(match_id=match)
+            all_shots.append(events[events['type'] == 'Shot'])
 
     dataframe = pd.concat(all_shots, ignore_index=True)
     os.makedirs("data/processed", exist_ok=True)
