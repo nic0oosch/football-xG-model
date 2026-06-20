@@ -13,7 +13,7 @@ def calc_angle(x, y):
 def count_defenders_in_cone(freeze_frame, shooter_location):
     """ Count opponents between shooter and goal with a rough cone"""
     shooter_x, shooter_y = shooter_location
-    count = 0
+    defenders = 0
     for player in freeze_frame:
         if player['teammate']:
             continue
@@ -21,8 +21,8 @@ def count_defenders_in_cone(freeze_frame, shooter_location):
         # only select oppenents nearer to the goel than the shooter
         if opp_x > shooter_x:
             if abs(opp_y - GOAL_Y) < abs(shooter_y - GOAL_Y) + 3:  # rough cone condition
-                count += 1
-    return count
+                defenders += 1
+    return defenders
 
 def get_goalkeeper_distance(freeze_frame):
     """ Get distance from Goalie to goal """
