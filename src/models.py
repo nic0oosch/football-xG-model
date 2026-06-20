@@ -61,8 +61,8 @@ def train_xgboost(train: pd.DataFrame) -> Pipeline:
     pipeline = Pipeline([
         ('preprocessor', make_preprocessor()),
         ('clf', XGBClassifier(
-            n_estimators=50,
-            max_depth=3,
+            n_estimators=100,
+            max_depth=4,
             subsample=0.8,
             colsample_bytree=0.8,
             learning_rate=0.01,

@@ -5,6 +5,10 @@ import numpy as np
 from statsbombpy import sb
 from features import build_feature_df
 
+# custom typing
+type SEASON_ID = int
+type COMPETITION_ID = int
+
 # Suppress StatsBomb NoAuthWarning for free open data access
 warnings.filterwarnings('ignore', message='credentials were not supplied')
 
@@ -13,17 +17,22 @@ RAW_CACHE = "data/processed/shots_raw.parquet"
 FEAT_CACHE = "data/processed/shots_features.parquet"
 HEATMAP_CACHE = "data/processed/heatmaps.npy"
 
+
 COMPETITIONS = {
+    # a competition is a tuple of (competition_id, season_id)
     (55, 282),  # EURO 2024
+    (55, 43),   # EURO 2020
     (9, 281),   # 1. Bundesliga 2023/2024
+    (11, 90),   # La Liga 2020/2021
     (16, 1),    # Champions League 2017/2018
     (16, 4),    # Champions League 2018/2019
     (43, 3),    # FIFA World Cup 2018
+    (43, 106),  # FIFA World Cup 2022
 }
 
 
 # load raw data
-def load_raw_shots(competitions: set[tuple[int, int]] = COMPETITIONS) -> pd.DataFrame:
+def load_raw_shots(competitions: set[tuple[COMPETITION_ID, SEASON_ID]] = COMPETITIONS) -> pd.DataFrame:
     if os.path.exists(RAW_CACHE):
         print("Loading existing data from cache...")
         return pd.read_parquet(RAW_CACHE)
