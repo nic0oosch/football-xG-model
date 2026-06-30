@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from xgboost import XGBClassifier
+
+# constants
 
 # Feature columns
 NUMERIC_FEATURES = ['distance', 'angle', 'n_defenders_in_cone', 'goalkeeper_distance']
@@ -37,40 +36,3 @@ def make_X_full(df: pd.DataFrame) -> np.ndarray:
     tabular = make_preprocessor().fit_transform(make_X_tabular(df)) 
     heatmap = make_X_heatmap(df)                                     
     return np.hstack([tabular, heatmap])  
-
-
-# Models
-
-def train_baseline(train: pd.DataFrame) -> Pipeline:
-    """Logistic Regression on distance + angle only"""
-    X = train[['distance', 'angle']].values
-    y = train['is_goal'].values
-
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('clf',    LogisticRegression(max_iter=1000))
-    ])
-    pipeline.fit(X, y)
-    return pipeline
-
-def train_xgboost(train: pd.DataFrame) -> Pipeline:
-    """XGBoost on all tabular features"""
-    X = make_X_tabular(train)
-    y = train['is_goal'].values
-
-    pipeline = Pipeline([
-        ('preprocessor', make_preprocessor()),
-        ('clf', XGBClassifier(
-            n_estimators=100,
-            max_depth=4,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            learning_rate=0.01,
-            eval_metric='logloss',
-            random_state=42
-        ))
-    ])
-    pipeline.fit(X, y)
-    return pipeline
-
-# later improvement: CNN on heatmap and XGBoost
