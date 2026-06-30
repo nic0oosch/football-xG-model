@@ -7,3 +7,4 @@ seaborn
 pandas
 scipy
 pyarrow
+torch 
