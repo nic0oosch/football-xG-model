@@ -19,9 +19,13 @@ def count_defenders_in_cone(freeze_frame, shooter_location):
             continue
         opp_x, opp_y = player['location']
         # only select oppenents nearer to the goel than the shooter
-        if opp_x > shooter_x:
-            if abs(opp_y - GOAL_Y) < abs(shooter_y - GOAL_Y) + 3:  # rough cone condition
-                defenders += 1
+        if opp_x <= shooter_x:
+            continue
+        t = (opp_x - shooter_x) / (GOAL_X - shooter_x + 1e-6) 
+        linear_y = shooter_y + t * (GOAL_Y - shooter_y)
+        cone_width = 2.0 + t * 3.0  # cone width increases with distance to goal
+        if abs(opp_y - linear_y) < cone_width:
+            defenders += 1
     return defenders
 
 def get_goalkeeper_distance(freeze_frame):
