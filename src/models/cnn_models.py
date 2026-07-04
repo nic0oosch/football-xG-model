@@ -73,3 +73,20 @@ class HybridXGNet(nn.Module):
 
         # 4. prediction / classification
         return self.classifier(feat_combined).squeeze(1)
+    
+# embedding model for CNN + XGBoost (tabular features)
+class XGNetEmbedder(nn.Module):
+    """
+    XGNet without final classification layer, used as feature extractor for stacking with XGBoost.
+    Output: 64-dimensional embedding per shot.
+    """
+    def __init__(self, trained_xgnet: XGNet):
+        super().__init__()
+        self.cnn = trained_xgnet.conv
+        # all without linear layer (64, 1)
+        self.embedder = nn.Sequential(
+            *list(trained_xgnet.classifier.children())[:-1]
+        )
+    
+    def forward(self, x):
+        return self.embedder(self.cnn(x)) # -> (batch_size, 64)

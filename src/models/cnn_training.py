@@ -11,7 +11,7 @@ from .base import make_preprocessor, make_X_tabular
 
 # helpers
 class EarlyStopping:
-    def __init__(self, patience=15):
+    def __init__(self, patience=18):
         self.patience = patience
         self.patience_counter = 0
         self.best_val_loss = float('inf')
