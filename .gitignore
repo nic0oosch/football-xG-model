@@ -4,6 +4,7 @@ __pycache__/*
 *.pyc
 notebooks/.ipynb_checkpoints/*
 notebooks/.ipynb_checkpoints/*.ipynb
+notebooks/data/
 models/*.pk1
 .venv/*
 .idea

@@ -10,6 +10,32 @@ def calc_distance(x, y):
 def calc_angle(x, y):
     return np.arctan2(abs(y - GOAL_Y), abs(x - GOAL_X))
 
+def count_defenders_in_cone(freeze_frame, shooter_location):
+    """ Count opponents between shooter and goal with a rough cone"""
+    shooter_x, shooter_y = shooter_location
+    defenders = 0
+    for player in freeze_frame:
+        if player['teammate']:
+            continue
+        opp_x, opp_y = player['location']
+        # only select oppenents nearer to the goel than the shooter
+        if opp_x <= shooter_x:
+            continue
+        t = (opp_x - shooter_x) / (GOAL_X - shooter_x + 1e-6) 
+        linear_y = shooter_y + t * (GOAL_Y - shooter_y)
+        cone_width = 2.0 + t * 3.0  # cone width increases with distance to goal
+        if abs(opp_y - linear_y) < cone_width:
+            defenders += 1
+    return defenders
+
+def get_goalkeeper_distance(freeze_frame):
+    """ Get distance from Goalie to goal """
+    for player in freeze_frame:
+        if not player['teammate'] and player.get('keeper', False):
+            goalie_x, goalie_y = player['location']
+            return calc_distance(goalie_x, goalie_y)
+    return 0.0 # no goalkeeper found
+
 def build_heatmap(freeze_frame, shooter_location, grid_size=(68, 52), blur=True):
     """
     Channel 0: Teammates
@@ -46,13 +72,16 @@ def get_label(shot) -> int:
 
 def extract_features(shot) -> dict:
     x, y = shot['location']
+    freeze_frame = shot['shot_freeze_frame']
     return {
         'distance':  calc_distance(x, y),
         'angle':     calc_angle(x, y),
         'body_part': shot['shot_body_part'],
         'shot_type': shot['shot_type'],
         'statsbomb_xg': shot['shot_statsbomb_xg'],
-        'heatmap':   build_heatmap(shot['shot_freeze_frame'], shot['location']),
+        'n_defenders_in_cone': count_defenders_in_cone(freeze_frame, (x, y)),
+        'goalkeeper_distance': get_goalkeeper_distance(freeze_frame),
+        'heatmap':   build_heatmap(freeze_frame, (x, y)),
         'is_goal':   get_label(shot)
     }
 
