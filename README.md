@@ -134,7 +134,7 @@ Data is fetched automatically on first run:
 
 ```bash
 cd notebooks
-jupyter notebook 01_exploration.ipynb
+jupyter notebook 04_CNN_heatmap_tabular.ipynb
 ```
 
 ---
