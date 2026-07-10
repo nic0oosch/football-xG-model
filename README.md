@@ -170,6 +170,6 @@ main                  stable releases only
 
 ## License
 
-MIT © 2025 Nico
+MIT © 2026 Nico
 
 *StatsBomb Open Data is subject to [StatsBomb's terms of use](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf) and is not included in this repository.*
