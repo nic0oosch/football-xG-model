@@ -8,7 +8,6 @@ Developed as a bachelor's learning / fun project exploring whether **spatial con
 
 ## Results
 
-All models evaluated on a held-out validation set. Test set is reserved for final thesis evaluation.
 
 | Model | AUC | Brier |
 |---|---|---|
