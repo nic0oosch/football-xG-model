@@ -18,7 +18,6 @@ Developed as a bachelor's learning / fun project exploring whether **spatial con
 | Stacked (XGNet → XGBoost) |  0.803 | 0.0932 |
 | StatsBomb xG (reference) | 0.810 | 0.0746 |
 
-> AUC: higher is better (max 1.0) · Brier: lower is better (min 0.0)
 
 ---
 
@@ -80,7 +79,9 @@ Uses [StatsBomb Open Data](https://github.com/statsbomb/open-data), free for non
 
 **Competitions included:**
 
-[competitions.json](https://raw.githubusercontent.com/hudl/open-data/refs/heads/master/data/competitions.json)
+Around 35 Competitions fetched from StatsBomb Open Data. Filtered by gender and year. (i.e. `male` and only competitions after `2010`)
+
+Uses StatsBomb raw [competitions.json](https://raw.githubusercontent.com/hudl/open-data/refs/heads/master/data/competitions.json)
 
 **Data is not included in this repository** due to StatsBomb's terms of use. It is fetched automatically via the `statsbombpy` API on first run and cached locally under `data/processed/`.
 
