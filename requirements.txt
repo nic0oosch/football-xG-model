@@ -8,3 +8,4 @@ pandas
 scipy
 pyarrow
 torch 
+requests
