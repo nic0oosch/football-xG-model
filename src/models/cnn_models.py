@@ -46,24 +46,37 @@ class HybridXGNet(nn.Module):
         # first branch: CNN for heatmap (3, 68, 52)
         self.cnn_branch = _build_cnn_backbone()  # output shape: (batch_size, 32, 8, 6)
 
-        # second branch: tabular features
-        self.tabular_branch = nn.Sequential(
-            nn.Linear(num_tabular_features, 32),
+        # CNN projection to 128-dim embedding
+        self.cnn_projection = nn.Sequential(
+            nn.Linear(CNN_OUT_DIM, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.Dropout(0.5) 
+            nn.Dropout(0.5)
         )
 
-        # combined for classification
+        # 2. Tabular Branch
+        self.tabular_branch = nn.Sequential(
+            nn.Linear(num_tabular_features, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(0.3) 
+        )
+
+        # 3. Classifier (now 128 + 64 = 192)
         self.classifier = nn.Sequential(
-            nn.Linear(CNN_OUT_DIM + 32, 64),
+            nn.Linear(128 + 64, 64),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(64, 1)
         )
+        
     def forward(self, x_heatmap, x_tabular):
         # 1. extract CNN-Features and flatten
         feat_cnn = self.cnn_branch(x_heatmap)
         feat_cnn = feat_cnn.flatten(start_dim=1)  # (batch_size, 32*8*6) 
+
+        feat_cnn = self.cnn_projection(feat_cnn)  
 
         # 2. extract tabular features
         feat_tabular = self.tabular_branch(x_tabular)  # (batch_size, 32)
