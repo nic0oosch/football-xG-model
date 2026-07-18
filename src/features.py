@@ -18,7 +18,7 @@ def count_defenders_in_cone(freeze_frame, shooter_location):
         if player['teammate']:
             continue
         opp_x, opp_y = player['location']
-        # only select oppenents nearer to the goel than the shooter
+        # only select opponents nearer to the goal than the shooter
         if opp_x <= shooter_x:
             continue
         t = (opp_x - shooter_x) / (GOAL_X - shooter_x + 1e-6) 
@@ -30,11 +30,17 @@ def count_defenders_in_cone(freeze_frame, shooter_location):
 
 def get_goalkeeper_distance(freeze_frame):
     """ Get distance from Goalie to goal """
+    if not freeze_frame:
+        return np.nan
     for player in freeze_frame:
-        if not player['teammate'] and player.get('keeper', False):
-            goalie_x, goalie_y = player['location']
-            return calc_distance(goalie_x, goalie_y)
-    return 0.0 # no goalkeeper found
+        if not player['teammate']:
+            position = player['position']
+            is_keeper_sb = (position.get('name') == 'Goalkeeper') or (position.get('id') == 1)
+            is_keeper_360 = (position.get('keeper') is True)
+            if is_keeper_sb or is_keeper_360:
+                goalie_x, goalie_y = player['location']
+                return calc_distance(goalie_x, goalie_y)
+    return 0.0
 
 def build_heatmap(freeze_frame, shooter_location, grid_size=(68, 52), blur=True):
     """
@@ -43,7 +49,7 @@ def build_heatmap(freeze_frame, shooter_location, grid_size=(68, 52), blur=True)
     Channel 2: Shooter
     """
     h, w = grid_size
-    heatmap = np.zeros((3, h, w))
+    heatmap = np.zeros((3, h, w), dtype=np.float32)
 
     def to_grid(x, y):
         gx = int(np.clip((x - 60) / 60 * w, 0, w - 1))
@@ -56,14 +62,14 @@ def build_heatmap(freeze_frame, shooter_location, grid_size=(68, 52), blur=True)
     for player in freeze_frame:
         gy, gx = to_grid(*player['location'])
         channel = 0 if player['teammate'] else 1
-        heatmap[channel, gy, gx] = 1.0
+        heatmap[channel, gy, gx] += 1.0
 
     gy, gx = to_grid(*shooter_location)
-    heatmap[2, gy, gx] = 1.0
+    heatmap[2, gy, gx] += 1.0
 
     if blur:
         for c in range(3):
-            heatmap[c] = gaussian_filter(heatmap[c], sigma=1)
+            heatmap[c] = gaussian_filter(heatmap[c], sigma=1.0)
 
     return heatmap
 
@@ -75,7 +81,7 @@ def extract_features(shot) -> dict:
     freeze_frame = shot['shot_freeze_frame']
     return {
         'distance':  calc_distance(x, y),
-        'angle':     calc_angle(x, y),
+        'angle':     np.sin(calc_angle(x, y)),
         'body_part': shot['shot_body_part'],
         'shot_type': shot['shot_type'],
         'statsbomb_xg': shot['shot_statsbomb_xg'],
