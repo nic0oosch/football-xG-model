@@ -30,8 +30,8 @@ class EarlyStopping:
 
     
 def train_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4):
-    train_dataset = ShotDataset(train)
-    val_dataset = ShotDataset(val)
+    train_dataset = ShotDataset(train, is_train=True)
+    val_dataset = ShotDataset(val, is_train=False)
 
     # class imbalance handling
     n_neg = (train_dataset.labels == 0).sum()
@@ -45,6 +45,8 @@ def train_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4)
     model = XGNet()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     train_losses = []
     val_losses = []
@@ -77,8 +79,11 @@ def train_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4)
         val_loss = np.mean(val_batch_losses)
         val_losses.append(val_loss)
 
+        scheduler.step(val_loss)
+        current_lr = optimizer.param_groups[0]['lr']
+
         if (epoch + 1) % 5 == 0:
-            print(f"Epoch {epoch+1:3d} | Train Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f}")
+            print(f"Epoch {epoch+1:3d} | Train Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | LR: {current_lr:.6f}")
         
         # Early Stopping Check
         if early_stopping.check(val_loss, model):
@@ -91,7 +96,7 @@ def train_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4)
 
 
 
-def train_hybrid_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4):
+def train_hybrid_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_decay=1e-4, y_cols_to_flip=None):
     # 1. prepare tabular features to prevent data leakage
     preprocessor = make_preprocessor()
     
@@ -104,8 +109,8 @@ def train_hybrid_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_deca
     
     num_tabular_features = X_train_tab.shape[1]
 
-    train_dataset = ShotDataset(train, tabular_features=X_train_tab)
-    val_dataset = ShotDataset(val, tabular_features=X_val_tab)
+    train_dataset = ShotDataset(train, tabular_features=X_train_tab, is_train=True, y_cols_to_flip=y_cols_to_flip)
+    val_dataset = ShotDataset(val, tabular_features=X_val_tab, is_train=False)
 
     # class imbalance handling
     n_neg = (train_dataset.labels == 0).sum()
@@ -120,6 +125,8 @@ def train_hybrid_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_deca
     model = HybridXGNet(num_tabular_features=num_tabular_features)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     train_losses = []
     val_losses = []
@@ -156,8 +163,12 @@ def train_hybrid_cnn(train, val, epochs=50, batch_size=64, lr=0.001, weight_deca
         val_loss = np.mean(val_epoch_losses)
         val_losses.append(val_loss)
 
+        scheduler.step(val_loss)
+
+        current_lr = optimizer.param_groups[0]['lr']
+
         if (epoch + 1) % 5 == 0: 
-            print(f"Epoch {epoch+1:3d} | Train Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f}")
+            print(f"Epoch {epoch+1:3d} | Train Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | LR: {current_lr:.6f}")
         
         # early stopping check
         if early_stopping.check(val_loss, model):

@@ -5,7 +5,7 @@ from xgboost import XGBClassifier
 from .cnn_models import XGNetEmbedder
 from .base import make_preprocessor, make_X_tabular
 
-def extract_embeddings(embedder: XGNetEmbedder, df: pd.DataFrame) -> np.ndarray:
+def extract_embeddings(embedder: XGNetEmbedder, df: pd.DataFrame, batch_size=128) -> np.ndarray:
     """
     Extract 64-dim CNN embeddings for all shots in df using the provided embedder model.
     """
@@ -13,9 +13,14 @@ def extract_embeddings(embedder: XGNetEmbedder, df: pd.DataFrame) -> np.ndarray:
     X_heatmap = torch.tensor(np.stack(df['heatmap'].values), dtype=torch.float32)
     embedder.eval()
 
+    embeddings = []
     with torch.no_grad():
-        embeddings = embedder(X_heatmap).numpy() # (n, 64)
-    return embeddings
+        for i in range(0, len(X_heatmap), batch_size):
+            batch = X_heatmap[i:i + batch_size]
+            batch_embeddings = embedder(batch).numpy()
+            embeddings.append(batch_embeddings)
+
+    return np.vstack(embeddings)
 
 
 def train_stacked_model(train: pd.DataFrame, val: pd.DataFrame, trained_xgnet):
@@ -48,6 +53,7 @@ def train_stacked_model(train: pd.DataFrame, val: pd.DataFrame, trained_xgnet):
     # XGBoost on combined features
     n_neg = (y_train == 0).sum()
     n_pos = (y_train == 1).sum()
+    pos_weight = np.sqrt(n_neg / n_pos)
 
     model = XGBClassifier(
         n_estimators=200,
@@ -55,9 +61,10 @@ def train_stacked_model(train: pd.DataFrame, val: pd.DataFrame, trained_xgnet):
         subsample=0.8,
         colsample_bytree=0.8,
         learning_rate=0.01,
-        scale_pos_weight=np.sqrt(n_neg / n_pos),
+        scale_pos_weight=pos_weight,
         eval_metric='logloss',
         random_state=42,
+        early_stopping_rounds=15,
     )
     model.fit(
         X_train, y_train,
