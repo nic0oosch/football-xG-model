@@ -12,12 +12,12 @@ All models evaluated on a held-out validation set. Test set is reserved for fina
 
 | Model | AUC | Brier |
 |---|---|---|
-| Logistic Regression (Baseline) | 0.712 | 0.0783 |
-| XGBoost | 0.758 | 0.0762 |
-| XGNet (heatmap only) | 0.749 | 0.0961 |
-| HybridXGNet (CNN + tabular) | 0.768 | 0.0905 |
-| **Stacked (XGNet → XGBoost)** | **0.776** | **0.0917** |
-| StatsBomb xG *(reference)* | 0.792 | 0.0739 |
+| Logistic Regression (Baseline) | 0.745 | 0.0839 |
+| XGBoost | 0.794 | 0.0803 |
+| XGNet (heatmap only) | 0.800 | 0.0974 |
+| HybridXGNet (CNN + tabular) | 0.806 | 0.0914 |
+| Stacked (XGNet → XGBoost) |  0.803 | 0.0932 |
+| StatsBomb xG (reference) | 0.810 | 0.0746 |
 
 > AUC: higher is better (max 1.0) · Brier: lower is better (min 0.0)
 
@@ -81,14 +81,7 @@ Uses [StatsBomb Open Data](https://github.com/statsbomb/open-data), free for non
 
 **Competitions included:**
 
-| Competition | Season            |
-|---|-------------------|
-| UEFA Euro | 2020, 2024        |
-| FIFA World Cup | 2018, 2022        |
-| 1. Bundesliga | 2015/16, 2023/24  |
-| La Liga | 2017/18 – 2020/21 |
-| Champions League | 2016/17 – 2018/19 |
-| AFCON | 2023              |
+[competitions.json](https://raw.githubusercontent.com/hudl/open-data/refs/heads/master/data/competitions.json)
 
 **Data is not included in this repository** due to StatsBomb's terms of use. It is fetched automatically via the `statsbombpy` API on first run and cached locally under `data/processed/`.
 
